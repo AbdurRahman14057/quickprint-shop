@@ -271,7 +271,6 @@
                             </span>
                             <button onclick="changeAdminPin()" class="text-indigo-600 font-bold hover:underline">Change</button>
                         </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -695,17 +694,18 @@
 
         function parseConfigString(raw) {
             if (!raw) return null;
-            try {
-                // Allow pasting either pure JSON or JS object snippet
-                let cleaned = raw.trim();
-                const match = cleaned.match(/\{[\s\S]*\}/);
-                if (match) cleaned = match[0];
-                // Convert unquoted JS keys to valid JSON keys if user copied JS snippet
-                cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":').replace(/'/g, '"');
-                const parsed = JSON.parse(cleaned);
-                if (parsed && parsed.apiKey && parsed.projectId) return parsed;
-            } catch (e) {
-                console.warn("Invalid config format:", e);
+            // Smart key-value extractor: works even if user pastes the full Firebase SDK snippet!
+            const keys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId', 'measurementId'];
+            const extracted = {};
+            for (const key of keys) {
+                const regex = new RegExp(`["']?${key}["']?\\s*:\\s*["']([^"']+)["']`);
+                const match = raw.match(regex);
+                if (match && match[1]) {
+                    extracted[key] = match[1].trim();
+                }
+            }
+            if (extracted.apiKey && extracted.projectId) {
+                return extracted;
             }
             return null;
         }
