@@ -79,13 +79,13 @@
                     </div>
                     <div>
                         <span class="font-bold text-xl tracking-tight text-slate-900">QuickPrint<span class="text-indigo-600">QR</span></span>
-                        <span class="hidden sm:inline-block ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Live Shop System</span>
+                        <span id="nav-role-badge" class="hidden sm:inline-block ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Shop Admin</span>
                     </div>
                 </div>
 
-                <!-- View Switcher Tabs -->
-                <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-                    <button id="btn-mode-shop" onclick="switchMode('shop')" class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm">
+                <!-- View Switcher Tabs (Hidden automatically when customer scans QR) -->
+                <div id="nav-mode-switcher" class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button id="btn-mode-shop" onclick="requestShopMode()" class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm">
                         <i data-lucide="monitor" class="w-4 h-4"></i>
                         <span>Shop PC View</span>
                     </button>
@@ -93,6 +93,12 @@
                         <i data-lucide="smartphone" class="w-4 h-4"></i>
                         <span>Customer Mobile</span>
                     </button>
+                </div>
+
+                <!-- Customer Mode Security Badge (Shown only when accessed via QR scan) -->
+                <div id="nav-customer-badge" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600"></i>
+                    <span>Customer Portal</span>
                 </div>
             </div>
         </div>
@@ -106,6 +112,28 @@
     <!-- ===================================================================== -->
     <main id="view-shop" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 fade-in no-print">
         
+        <!-- Multi-Device Cloud Sync Status & Setup Banner -->
+        <div id="cloud-sync-banner" class="bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-start gap-3">
+                    <div id="cloud-status-icon" class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <i data-lucide="cloud-off" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="cloud-status-title" class="text-sm font-bold text-amber-950">Single-Device Mode (Phone to Laptop Sync OFF)</span>
+                            <span id="cloud-status-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">Setup Required</span>
+                        </div>
+                        <p id="cloud-status-desc" class="text-xs text-amber-800 mt-0.5">Phone se upload ki gayi files laptop par live laane ke liye apna free Cloud Config ek baar connect karein.</p>
+                    </div>
+                </div>
+                <button onclick="toggleCloudSetupModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors shrink-0 flex items-center gap-1.5">
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                    <span>Connect Cloud Sync</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Connected Printer Selection & Status Bar -->
         <div class="bg-white border border-slate-200 rounded-2xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex items-center gap-3">
@@ -232,18 +260,17 @@
                         <!-- Quick Simulate Button for Testing -->
                         <button onclick="switchMode('customer')" class="w-full py-2.5 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 border border-indigo-200">
                             <i data-lucide="smartphone" class="w-4 h-4"></i>
-                            <span>Open Customer Mobile Screen</span>
+                            <span>Test Customer Mobile View</span>
                         </button>
 
-                        <!-- Supported Formats Info -->
-                        <div class="mt-5 pt-4 border-t border-slate-100 w-full">
-                            <p class="text-xs font-semibold text-slate-500 mb-2">Available Print Presets:</p>
-                            <div class="flex flex-wrap gap-1.5">
-                                <span class="text-[11px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium">🪪 Aadhaar PVC Card</span>
-                                <span class="text-[11px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium">📄 A4 Document</span>
-                                <span class="text-[11px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium">🖼️ Passport Photo</span>
-                                <span class="text-[11px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium">📑 Legal / Stamp</span>
-                            </div>
+                        <!-- Admin Lock / PIN Settings -->
+                        <div class="mt-3 w-full flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                            <span class="text-slate-600 font-medium flex items-center gap-1.5">
+                                <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-500"></i>
+                                <span>Admin PIN: <strong id="display-admin-pin" class="font-mono text-slate-900">1234</strong></span>
+                            </span>
+                            <button onclick="changeAdminPin()" class="text-indigo-600 font-bold hover:underline">Change</button>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -540,6 +567,71 @@
         </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- MODAL: CLOUD SYNC CONFIGURATION (PHONE TO LAPTOP LIVE CONNECTION)     -->
+    <!-- ===================================================================== -->
+    <div id="cloud-setup-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-200 fade-in">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-indigo-600 text-white">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="cloud" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-sm sm:text-base">Phone-to-Laptop Live Sync Setup</h3>
+                </div>
+                <button onclick="toggleCloudSetupModal()" class="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1.5">
+                    <p class="font-bold text-slate-900">2-Minute Free Setup Steps:</p>
+                    <ol class="list-decimal list-inside space-y-1 text-slate-600">
+                        <li><a href="https://console.firebase.google.com" target="_blank" class="text-indigo-600 font-bold underline">console.firebase.google.com</a> par jakar ek free project banayein.</li>
+                        <li>Left menu mein <strong>Build &gt; Firestore Database</strong> par click karke <strong>Create database</strong> (Test mode mein) start karein.</li>
+                        <li><strong>Build &gt; Authentication</strong> mein jakar <strong>Anonymous</strong> sign-in ko Enable karein.</li>
+                        <li>Project Settings (&gt; Web App `&lt;/&gt;`) se <code>firebaseConfig</code> ka JSON copy karke neeche paste karein:</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-800 mb-1">Paste Firebase Config JSON:</label>
+                    <textarea id="cloud-config-input" rows="6" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "your-app.firebaseapp.com",
+  "projectId": "your-app",
+  "appId": "1:12345:web:abcde"
+}' class="w-full p-3 rounded-xl border border-slate-300 font-mono text-[11px] bg-slate-50 focus:border-indigo-500 outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 pt-2">
+                    <button onclick="clearCloudConfig()" class="px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50">Disconnect</button>
+                    <div class="flex gap-2">
+                        <button onclick="toggleCloudSetupModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+                        <button onclick="saveCloudConfigFromUI()" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">Save & Connect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: ADMIN PIN VERIFICATION (PROTECTS SHOP PC DASHBOARD)         -->
+    <!-- ===================================================================== -->
+    <div id="admin-pin-modal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border border-slate-200 fade-in p-6 text-center">
+            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="lock" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-slate-900 text-base">Shopkeeper Admin Access</h3>
+            <p class="text-xs text-slate-500 mt-1 mb-4">Shop PC Dashboard kholne ke liye 4-digit Admin PIN dalein (Default: 1234)</p>
+            <input type="password" id="admin-pin-input" maxlength="6" placeholder="••••" onkeydown="if(event.key==='Enter') verifyAdminPin()" class="w-full text-center tracking-[0.5em] font-mono text-lg font-bold px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none mb-4">
+            <div class="flex gap-2">
+                <button onclick="closeAdminPinModal()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+                <button onclick="verifyAdminPin()" class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">Unlock PC</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden Dedicated Print Area (Only visible when window.print() triggers) -->
     <div id="print-area" class="hidden"></div>
 
@@ -556,6 +648,9 @@
 
         // App State
         let currentMode = 'shop'; // 'shop' or 'customer'
+        let isQrCustomerSession = false;
+        let adminPin = '1234';
+        let isAdminUnlocked = true;
         let selectedSize = 'aadhaar';
         let selectedColor = 'color';
         let copiesCount = 1;
@@ -573,13 +668,92 @@
         let db = null;
         let auth = null;
         let useFirebase = false;
+        let activeFirebaseConfig = null;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'quickprint-qr-shop';
+
+        function parseConfigString(raw) {
+            if (!raw) return null;
+            try {
+                // Allow pasting either pure JSON or JS object snippet
+                let cleaned = raw.trim();
+                const match = cleaned.match(/\{[\s\S]*\}/);
+                if (match) cleaned = match[0];
+                // Convert unquoted JS keys to valid JSON keys if user copied JS snippet
+                cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":').replace(/'/g, '"');
+                const parsed = JSON.parse(cleaned);
+                if (parsed && parsed.apiKey && parsed.projectId) return parsed;
+            } catch (e) {
+                console.warn("Invalid config format:", e);
+            }
+            return null;
+        }
+
+        function resolveCloudConfig() {
+            // 1. Check URL query parameter (?cfg=...) passed via QR code!
+            const params = new URLSearchParams(window.location.search);
+            const urlCfg = params.get('cfg');
+            if (urlCfg) {
+                try {
+                    const decoded = JSON.parse(atob(decodeURIComponent(urlCfg)));
+                    if (decoded && decoded.apiKey && decoded.projectId) {
+                        try { sessionStorage.setItem('qp_cloud_cfg', JSON.stringify(decoded)); } catch (_) {}
+                        return decoded;
+                    }
+                } catch (e) {}
+            }
+            // 2. Check session storage
+            try {
+                const saved = sessionStorage.getItem('qp_cloud_cfg');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.apiKey && parsed.projectId) return parsed;
+                }
+            } catch (_) {}
+            // 3. Check environment variable
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                return JSON.parse(__firebase_config);
+            }
+            return null;
+        }
+
+        function updateCloudStatusUI(connected) {
+            const banner = document.getElementById('cloud-sync-banner');
+            const icon = document.getElementById('cloud-status-icon');
+            const title = document.getElementById('cloud-status-title');
+            const badge = document.getElementById('cloud-status-badge');
+            const desc = document.getElementById('cloud-status-desc');
+            if (!banner) return;
+
+            if (connected) {
+                banner.className = "bg-emerald-50 border border-emerald-300 rounded-2xl p-4 mb-5 shadow-sm";
+                icon.className = "w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0";
+                icon.innerHTML = `<i data-lucide="cloud-check" class="w-5 h-5"></i>`;
+                title.className = "text-sm font-bold text-emerald-950";
+                title.textContent = "Live Cloud Sync Connected (Phone ↔ Laptop Active)";
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900";
+                badge.textContent = "Live Online";
+                desc.className = "text-xs text-emerald-800 mt-0.5";
+                desc.textContent = "Ab koi bhi customer QR scan karke phone se file bhejega toh seedha is laptop dashboard par dikhega!";
+            } else {
+                banner.className = "bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-5 shadow-sm";
+                icon.className = "w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0";
+                icon.innerHTML = `<i data-lucide="cloud-off" class="w-5 h-5"></i>`;
+                title.className = "text-sm font-bold text-amber-950";
+                title.textContent = "Single-Device Mode (Phone to Laptop Sync OFF)";
+                badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900";
+                badge.textContent = "Setup Required";
+                desc.className = "text-xs text-amber-800 mt-0.5";
+                desc.textContent = "Phone se upload ki gayi files laptop par live laane ke liye apna free Cloud Config ek baar connect karein.";
+            }
+            lucide.createIcons();
+        }
 
         async function initCloudSync() {
             try {
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    const firebaseConfig = JSON.parse(__firebase_config);
-                    const app = initializeApp(firebaseConfig);
+                const firebaseConfig = resolveCloudConfig();
+                if (firebaseConfig) {
+                    activeFirebaseConfig = firebaseConfig;
+                    const app = initializeApp(firebaseConfig, 'qp-app-' + Date.now());
                     db = getFirestore(app);
                     auth = getAuth(app);
 
@@ -591,47 +765,58 @@
 
                     if (auth.currentUser) {
                         useFirebase = true;
+                        updateCloudStatusUI(true);
+                        generateShopQR();
                         listenToPrintJobs();
                     }
+                } else {
+                    updateCloudStatusUI(false);
                 }
             } catch (err) {
                 console.warn("Running in local single-device mode:", err);
                 useFirebase = false;
+                updateCloudStatusUI(false);
             }
         }
 
-        // Real-time listener for Print Jobs (Rule 1 & Rule 2 compliant)
-        function listenToPrintJobs() {
-            if (!useFirebase || !db || !auth.currentUser) return;
-            const jobsRef = collection(db, 'artifacts', appId, 'public', 'data', 'print_jobs');
-            
-            onSnapshot(jobsRef, (snapshot) => {
-                const fetched = [];
-                snapshot.forEach((docSnap) => {
-                    fetched.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                // Sort in memory (newest first)
-                fetched.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                
-                // Check for new pending job if Auto-Print is ON
-                const prevPendingIds = new Set(jobsList.filter(j => j.status === 'pending').map(j => j.id));
-                const newPending = fetched.find(j => j.status === 'pending' && !prevPendingIds.has(j.id));
-                
-                jobsList = fetched;
-                renderShopQueue();
+        window.toggleCloudSetupModal = function() {
+            const modal = document.getElementById('cloud-setup-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden') && activeFirebaseConfig) {
+                document.getElementById('cloud-config-input').value = JSON.stringify(activeFirebaseConfig, null, 2);
+            }
+            lucide.createIcons();
+        };
 
-                if (newPending && autoPrintEnabled && currentMode === 'shop') {
-                    showToast(`Auto-Printing job from ${newPending.customerName}...`, 'success');
-                    approveAndPrintJob(newPending.id);
-                } else if (newPending && currentMode === 'shop') {
-                    showToast(`New Print Request from ${newPending.customerName}!`, 'info');
-                }
-            }, (error) => {
-                console.error("Firestore listener error:", error);
-            });
-        }
+        window.saveCloudConfigFromUI = async function() {
+            const raw = document.getElementById('cloud-config-input').value;
+            const parsed = parseConfigString(raw);
+            if (!parsed) {
+                showToast("Valid JSON config paste karein (apiKey & projectId zaroori hai)", "error");
+                return;
+            }
+            try { sessionStorage.setItem('qp_cloud_cfg', JSON.stringify(parsed)); } catch (_) {}
+            toggleCloudSetupModal();
+            showToast("Connecting to Cloud Sync...", "info");
+            await initCloudSync();
+            if (useFirebase) {
+                showToast("Cloud Sync Connected! Naya QR generate ho gaya hai.", "success");
+            } else {
+                showToast("Connection failed. Check Firestore & Anonymous Auth settings.", "error");
+            }
+        };
 
-        // Generate Shop QR Code
+        window.clearCloudConfig = function() {
+            try { sessionStorage.removeItem('qp_cloud_cfg'); } catch (_) {}
+            activeFirebaseConfig = null;
+            useFirebase = false;
+            db = null;
+            updateCloudStatusUI(false);
+            generateShopQR();
+            toggleCloudSetupModal();
+            showToast("Cloud Sync Disconnected", "info");
+        };
+
         let customPublicBaseUrl = '';
 
         function getCustomerPortalUrl() {
@@ -648,56 +833,116 @@
                 }
             }
             const separator = baseUrl.includes('?') ? '&' : '?';
-            return `${baseUrl}${separator}mode=customer&shop=SHOP-8824`;
+            let fullUrl = `${baseUrl}${separator}mode=customer&shop=SHOP-8824`;
+            // Embed compact cloud config into QR link so any customer phone connects automatically!
+            if (activeFirebaseConfig && activeFirebaseConfig.apiKey && activeFirebaseConfig.projectId) {
+                const minimalCfg = {
+                    apiKey: activeFirebaseConfig.apiKey,
+                    authDomain: activeFirebaseConfig.authDomain || `${activeFirebaseConfig.projectId}.firebaseapp.com`,
+                    projectId: activeFirebaseConfig.projectId,
+                    appId: activeFirebaseConfig.appId || ''
+                };
+                const encodedCfg = encodeURIComponent(btoa(JSON.stringify(minimalCfg)));
+                fullUrl += `&cfg=${encodedCfg}`;
+            }
+            return fullUrl;
         }
 
         function generateShopQR() {
             const qrContainer = document.getElementById('shop-qrcode');
             if (!qrContainer) return;
             qrContainer.innerHTML = '';
+
             const customerUrl = getCustomerPortalUrl();
-            
             const urlPreview = document.getElementById('qr-current-url-preview');
             if (urlPreview) {
                 urlPreview.textContent = customerUrl;
+                urlPreview.title = customerUrl;
             }
-            
-            new QRCode(qrContainer, {
-                text: customerUrl,
-                width: 180,
-                height: 180,
-                colorDark: "#1e1b4b",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
+
+            try {
+                new QRCode(qrContainer, {
+                    text: customerUrl,
+                    width: 184,
+                    height: 184,
+                    colorDark: "#0f172a",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch (e) {
+                qrContainer.innerHTML = `<div class="text-xs text-slate-400 text-center p-4">QR Ready:<br><span class="text-[10px] break-all">${customerUrl}</span></div>`;
+            }
         }
 
         window.toggleQrUrlEditor = function() {
             const editor = document.getElementById('qr-url-editor');
             const input = document.getElementById('custom-qr-base-url');
             editor.classList.toggle('hidden');
-            if (!editor.classList.contains('hidden') && !input.value) {
-                input.value = getCustomerPortalUrl().split('?')[0];
+            if (!editor.classList.contains('hidden')) {
+                input.value = customPublicBaseUrl || window.location.href.split('?')[0];
+                input.focus();
             }
         };
 
         window.saveCustomQrUrl = function() {
-            const input = document.getElementById('custom-qr-base-url').value.trim();
-            if (!input) {
-                customPublicBaseUrl = '';
-            } else {
-                customPublicBaseUrl = input.startsWith('http://') || input.startsWith('https://') ? input : 'https://' + input;
+            const val = document.getElementById('custom-qr-base-url').value.trim();
+            if (!val) {
+                showToast("Kripya valid URL dalein (e.g. https://...)", "error");
+                return;
             }
+            customPublicBaseUrl = val;
             generateShopQR();
             document.getElementById('qr-url-editor').classList.add('hidden');
             showToast("QR Code updated with new link!", "success");
         };
 
-        // Check URL params on load (If scanned via phone, open Customer View directly)
+        function listenToPrintJobs() {
+            if (!useFirebase || !db || !auth.currentUser) return;
+            const jobsRef = collection(db, 'artifacts', appId, 'public', 'data', 'print_jobs');
+            onSnapshot(jobsRef, (snapshot) => {
+                const updated = [];
+                snapshot.forEach((docSnap) => {
+                    updated.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                updated.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                
+                // Check if new pending job arrived while auto-print is ON
+                if (autoPrintEnabled && currentMode === 'shop') {
+                    const newPending = updated.find(j => j.status === 'pending' && !jobsList.some(old => old.id === j.id));
+                    if (newPending) {
+                        jobsList = updated;
+                        renderShopQueue();
+                        approveAndPrintJob(newPending.id);
+                        return;
+                    }
+                }
+
+                jobsList = updated;
+                renderShopQueue();
+            }, (error) => {
+                console.error("Firestore listener error:", error);
+            });
+        }
+
+        // Check URL params on load (If scanned via phone, open Customer View directly & hide Admin controls)
         window.addEventListener('DOMContentLoaded', () => {
+            try {
+                const savedPin = sessionStorage.getItem('qp_admin_pin');
+                if (savedPin) adminPin = savedPin;
+            } catch (_) {}
+            const pinDisplay = document.getElementById('display-admin-pin');
+            if (pinDisplay) pinDisplay.textContent = adminPin;
+
             const params = new URLSearchParams(window.location.search);
             const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
             if (params.get('mode') === 'customer' || hashParams.get('mode') === 'customer') {
+                isQrCustomerSession = true;
+                isAdminUnlocked = false;
+                document.getElementById('nav-mode-switcher').classList.add('hidden');
+                const custBadge = document.getElementById('nav-customer-badge');
+                custBadge.classList.remove('hidden');
+                custBadge.classList.add('flex');
+                document.getElementById('nav-role-badge').textContent = 'Self-Service Print';
                 switchMode('customer');
             } else {
                 generateShopQR();
@@ -706,8 +951,51 @@
             calculateEstimate();
         });
 
+        window.requestShopMode = function() {
+            if (isAdminUnlocked) {
+                switchMode('shop');
+                return;
+            }
+            const modal = document.getElementById('admin-pin-modal');
+            const input = document.getElementById('admin-pin-input');
+            input.value = '';
+            modal.classList.remove('hidden');
+            setTimeout(() => input.focus(), 100);
+            lucide.createIcons();
+        };
+
+        window.closeAdminPinModal = function() {
+            document.getElementById('admin-pin-modal').classList.add('hidden');
+        };
+
+        window.verifyAdminPin = function() {
+            const entered = document.getElementById('admin-pin-input').value.trim();
+            if (entered === adminPin) {
+                isAdminUnlocked = true;
+                closeAdminPinModal();
+                switchMode('shop');
+                showToast("Shop PC Dashboard Unlocked", "success");
+            } else {
+                showToast("Galat Admin PIN! Dobara koshish karein.", "error");
+            }
+        };
+
+        window.changeAdminPin = function() {
+            const newPin = prompt("Naya 4-digit Shop Admin PIN dalein:", adminPin);
+            if (newPin && newPin.trim().length >= 4) {
+                adminPin = newPin.trim();
+                try { sessionStorage.setItem('qp_admin_pin', adminPin); } catch (_) {}
+                document.getElementById('display-admin-pin').textContent = adminPin;
+                showToast(`Admin PIN updated to ${adminPin}`, "success");
+            }
+        };
+
         // Expose functions globally for HTML onclick handlers
         window.switchMode = function(mode) {
+            if (mode === 'shop' && isQrCustomerSession && !isAdminUnlocked) {
+                requestShopMode();
+                return;
+            }
             currentMode = mode;
             const viewShop = document.getElementById('view-shop');
             const viewCust = document.getElementById('view-customer');
@@ -722,6 +1010,7 @@
                 generateShopQR();
                 renderShopQueue();
             } else {
+                if (isQrCustomerSession) isAdminUnlocked = false;
                 viewShop.classList.add('hidden');
                 viewCust.classList.remove('hidden');
                 btnCust.className = "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-600 shadow-sm";
