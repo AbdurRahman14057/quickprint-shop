@@ -320,6 +320,15 @@
     <!-- ===================================================================== -->
     <main id="view-customer" class="hidden max-w-xl mx-auto px-4 py-6 fade-in no-print">
         
+        <!-- Warning Banner if Shop PC hasn't connected Cloud Sync yet -->
+        <div id="customer-offline-warning" class="hidden bg-rose-50 border border-rose-300 rounded-2xl p-4 mb-5 flex items-start gap-3">
+            <i data-lucide="wifi-off" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5"></i>
+            <div class="text-xs text-rose-900">
+                <p class="font-bold">Shop PC Cloud Sync Connected Nahi Hai!</p>
+                <p class="mt-0.5 text-rose-700">Abhi Shop PC par Cloud Sync ON nahi hai, isliye upload ki gayi file PC par nahi pahunchegi. Kripya pehle Shop PC par <strong>Connect Cloud Sync</strong> setup karein.</p>
+            </div>
+        </div>
+
         <!-- Customer Header Card -->
         <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white shadow-lg mb-6">
             <div class="flex items-center justify-between">
@@ -603,6 +612,16 @@
 }' class="w-full p-3 rounded-xl border border-slate-300 font-mono text-[11px] bg-slate-50 focus:border-indigo-500 outline-none"></textarea>
                 </div>
 
+                <!-- Permanent GitHub Embed Helper -->
+                <div id="permanent-code-box" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3 space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-emerald-900">Permanent Fix for GitHub:</span>
+                        <button onclick="copyPermanentSnippet()" class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-bold hover:bg-emerald-700">Copy Line</button>
+                    </div>
+                    <p class="text-[11px] text-emerald-800">Is line ko apne <code>index.html</code> mein <code>DEFAULT_CLOUD_CONFIG</code> ki jagah paste karke GitHub par daal dein—phir kabhi dobara setup nahi karna padega!</p>
+                    <pre id="permanent-snippet-text" class="bg-white p-2 rounded border border-emerald-200 text-[10px] font-mono overflow-x-auto text-slate-800"></pre>
+                </div>
+
                 <div class="flex items-center justify-between gap-2 pt-2">
                     <button onclick="clearCloudConfig()" class="px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50">Disconnect</button>
                     <div class="flex gap-2">
@@ -665,6 +684,9 @@
         };
 
         // Firebase Setup (with graceful fallback to in-memory sync if offline)
+        // TIP: Paste your Firebase config object here instead of null to make Cloud Sync permanent on GitHub!
+        const DEFAULT_CLOUD_CONFIG = null;
+
         let db = null;
         let auth = null;
         let useFirebase = false;
@@ -699,9 +721,11 @@
                         try { sessionStorage.setItem('qp_cloud_cfg', JSON.stringify(decoded)); } catch (_) {}
                         return decoded;
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.warn("Failed to parse URL cloud config:", e);
+                }
             }
-            // 2. Check session storage
+            // 2. Check sessionStorage
             try {
                 const saved = sessionStorage.getItem('qp_cloud_cfg');
                 if (saved) {
@@ -709,7 +733,11 @@
                     if (parsed && parsed.apiKey && parsed.projectId) return parsed;
                 }
             } catch (_) {}
-            // 3. Check environment variable
+            // 3. Check permanent hardcoded config (for GitHub Pages)
+            if (DEFAULT_CLOUD_CONFIG && DEFAULT_CLOUD_CONFIG.apiKey && DEFAULT_CLOUD_CONFIG.projectId) {
+                return DEFAULT_CLOUD_CONFIG;
+            }
+            // 4. Check environment variable
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                 return JSON.parse(__firebase_config);
             }
@@ -722,6 +750,16 @@
             const title = document.getElementById('cloud-status-title');
             const badge = document.getElementById('cloud-status-badge');
             const desc = document.getElementById('cloud-status-desc');
+            const custWarning = document.getElementById('customer-offline-warning');
+
+            if (custWarning) {
+                if (!connected && isQrCustomerSession) {
+                    custWarning.classList.remove('hidden');
+                } else {
+                    custWarning.classList.add('hidden');
+                }
+            }
+
             if (!banner) return;
 
             if (connected) {
@@ -784,8 +822,29 @@
             modal.classList.toggle('hidden');
             if (!modal.classList.contains('hidden') && activeFirebaseConfig) {
                 document.getElementById('cloud-config-input').value = JSON.stringify(activeFirebaseConfig, null, 2);
+                updatePermanentSnippetUI(activeFirebaseConfig);
             }
             lucide.createIcons();
+        };
+
+        function updatePermanentSnippetUI(cfg) {
+            const box = document.getElementById('permanent-code-box');
+            const pre = document.getElementById('permanent-snippet-text');
+            if (box && pre && cfg) {
+                box.classList.remove('hidden');
+                pre.textContent = `const DEFAULT_CLOUD_CONFIG = ${JSON.stringify(cfg)};`;
+            }
+        }
+
+        window.copyPermanentSnippet = function() {
+            const text = document.getElementById('permanent-snippet-text').textContent;
+            const temp = document.createElement('input');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast("Permanent config line copied!", "success");
         };
 
         window.saveCloudConfigFromUI = async function() {
@@ -796,11 +855,10 @@
                 return;
             }
             try { sessionStorage.setItem('qp_cloud_cfg', JSON.stringify(parsed)); } catch (_) {}
-            toggleCloudSetupModal();
-            showToast("Connecting to Cloud Sync...", "info");
+            updatePermanentSnippetUI(parsed);
             await initCloudSync();
             if (useFirebase) {
-                showToast("Cloud Sync Connected! Naya QR generate ho gaya hai.", "success");
+                showToast("Cloud Sync Connected! Neeche se Permanent Line copy karke GitHub par daal dein.", "success");
             } else {
                 showToast("Connection failed. Check Firestore & Anonymous Auth settings.", "error");
             }
