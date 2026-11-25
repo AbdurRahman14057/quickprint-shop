@@ -617,7 +617,7 @@
                         <span class="font-bold text-emerald-900">Permanent Fix for GitHub:</span>
                         <button onclick="copyPermanentSnippet()" class="px-2.5 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-bold hover:bg-emerald-700">Copy Line</button>
                     </div>
-                    <p class="text-[11px] text-emerald-800">Is line ko apne <code>index.html</code> mein <code>const DEFAULT_CLOUD_CONFIG = {"apiKey":"AIzaSyAgC0E5muoSkAmA4JrMhLC13IuscZKf2nc","authDomain":"quickprintshop-eef19.firebaseapp.com","projectId":"quickprintshop-eef19","storageBucket":"quickprintshop-eef19.firebasestorage.app","messagingSenderId":"564608118871","appId":"1:564608118871:web:d7ae912ae5875cd0a13312","measurementId":"G-DG8KQ83NY0"};</code> ki jagah paste karke GitHub par daal dein—phir kabhi dobara setup nahi karna padega!</p>
+                    <p class="text-[11px] text-emerald-800">Is line ko apne <code>index.html</code> mein <code>DEFAULT_CLOUD_CONFIG</code> ki jagah paste karke GitHub par daal dein—phir kabhi dobara setup nahi karna padega!</p>
                     <pre id="permanent-snippet-text" class="bg-white p-2 rounded border border-emerald-200 text-[10px] font-mono overflow-x-auto text-slate-800"></pre>
                 </div>
 
@@ -684,7 +684,7 @@
 
         // Firebase Setup (with graceful fallback to in-memory sync if offline)
         // TIP: Paste your Firebase config object here instead of null to make Cloud Sync permanent on GitHub!
-        const DEFAULT_CLOUD_CONFIG = null;
+        const DEFAULT_CLOUD_CONFIG = {"apiKey":"AIzaSyAgC0E5muoSkAmA4JrMhLC13IuscZKf2nc","authDomain":"quickprintshop-eef19.firebaseapp.com","projectId":"quickprintshop-eef19","storageBucket":"quickprintshop-eef19.firebasestorage.app","messagingSenderId":"564608118871","appId":"1:564608118871:web:d7ae912ae5875cd0a13312","measurementId":"G-DG8KQ83NY0"};
 
         let db = null;
         let auth = null;
